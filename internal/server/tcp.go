@@ -37,7 +37,7 @@ func (s *TCPServer) Start(address string) error {
 			go func(c net.Conn) {
 				defer s.wg.Done()
 				defer c.Close()
-				s.HandleConnection(conn)
+				s.handleConnection(conn)
 			}(conn)
 		}
 	}()
@@ -52,7 +52,7 @@ func (s *TCPServer) Stop() error {
 	return nil
 }
 
-func (s *TCPServer) HandleConnection(conn net.Conn) {
+func (s *TCPServer) handleConnection(conn net.Conn) {
 	buffer := make([]byte, 1024)
 	for {
 		n, err := conn.Read(buffer)
