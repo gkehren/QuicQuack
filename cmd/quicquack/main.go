@@ -7,11 +7,21 @@ import (
 )
 
 func main() {
-	lb := benchmark.NewLatencyBenchmark("tcp", "localhost:8080", 10)
+	lbTcp := benchmark.NewLatencyBenchmark("tcp", "localhost:8080", 10)
 
-	if err := lb.Run(); err != nil {
+	if err := lbTcp.Run(); err != nil {
 		log.Fatalf("Error running latency benchmark: %v", err)
 	}
 
-	fmt.Println(lb.Results())
+	fmt.Println("TCP Results:")
+	fmt.Println(lbTcp.Results())
+
+	lbUdp := benchmark.NewLatencyBenchmark("udp", "localhost:8080", 10)
+
+	if err := lbUdp.Run(); err != nil {
+		log.Fatalf("Error running latency benchmark: %v", err)
+	}
+
+	fmt.Println("UDP Results:")
+	fmt.Println(lbUdp.Results())
 }
