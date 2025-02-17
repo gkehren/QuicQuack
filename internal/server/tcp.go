@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"log"
 	"net"
 	"sync"
@@ -22,16 +23,17 @@ func (s *TCPServer) Start(address string) error {
 	}
 	s.listener = l
 	s.wg.Add(1)
+
 	go func() {
 		defer s.wg.Done()
 		for {
 			conn, err := s.listener.Accept()
 			if err != nil {
-				if ne, ok := err.(net.Error); ok && ne.Timeout() {
-					continue
+				if errors.Is(err, net.ErrClosed) {
+					return
 				}
 				log.Println("Error accepting connection:", err)
-				break
+				continue
 			}
 			s.wg.Add(1)
 			go func(c net.Conn) {

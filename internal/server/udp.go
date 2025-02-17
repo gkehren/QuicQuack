@@ -8,7 +8,6 @@ import (
 
 type UDPServer struct {
 	conn     *net.UDPConn
-	running  bool
 	stopChan chan struct{}
 }
 
@@ -29,29 +28,28 @@ func (s *UDPServer) Start(address string) error {
 		return err
 	}
 	s.conn = conn
-	s.running = true
 
 	go func() {
-		for s.running {
-			buffer := make([]byte, 1024)
-			n, remoteAddr, err := s.conn.ReadFromUDP(buffer)
-			if err != nil {
-				if !s.running {
-					return
-				}
-				if !errors.Is(err, net.ErrClosed) {
+		for {
+			select {
+			case <-s.stopChan:
+				return
+			default:
+				buffer := make([]byte, 1024)
+				n, remoteAddr, err := s.conn.ReadFromUDP(buffer)
+				if err != nil {
+					if errors.Is(err, net.ErrClosed) {
+						return
+					}
 					log.Println("Error reading:", err)
+					continue
 				}
-				continue
-			}
 
-			_, err = s.conn.WriteToUDP(buffer[:n], remoteAddr)
-			if err != nil {
-				if !s.running {
-					return
+				_, err = s.conn.WriteToUDP(buffer[:n], remoteAddr)
+				if err != nil {
+					log.Println("Error writing:", err)
+					continue
 				}
-				log.Println("Error writing:", err)
-				continue
 			}
 		}
 	}()
@@ -60,7 +58,7 @@ func (s *UDPServer) Start(address string) error {
 }
 
 func (s *UDPServer) Stop() error {
-	s.running = false
+	close(s.stopChan)
 	if s.conn != nil {
 		return s.conn.Close()
 	}
