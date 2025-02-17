@@ -24,4 +24,13 @@ func main() {
 
 	fmt.Println("UDP Results:")
 	fmt.Println(lbUdp.Results())
+
+	lbQuic := benchmark.NewLatencyBenchmark("quic", "localhost:8080", 10)
+
+	if err := lbQuic.Run(); err != nil {
+		log.Fatalf("Error running latency benchmark: %v", err)
+	}
+
+	fmt.Println("Quic Results:")
+	fmt.Println(lbQuic.Results())
 }
