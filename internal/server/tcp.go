@@ -39,7 +39,7 @@ func (s *TCPServer) Start(address string) error {
 			go func(c net.Conn) {
 				defer s.wg.Done()
 				defer c.Close()
-				s.handleConnection(conn)
+				s.handleConnection(c)
 			}(conn)
 		}
 	}()

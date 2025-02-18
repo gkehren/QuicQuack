@@ -20,7 +20,7 @@ type QuicServer struct {
 	wg       sync.WaitGroup
 }
 
-func NewQuicSerer() *QuicServer {
+func NewQuicServer() *QuicServer {
 	return &QuicServer{}
 }
 

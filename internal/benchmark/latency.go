@@ -34,7 +34,7 @@ func (lb *LatencyBenchmark) Run() error {
 		s = server.NewUDPServer()
 		c = client.NewUDPClient()
 	case "quic":
-		s = server.NewQuicSerer()
+		s = server.NewQuicServer()
 		c = client.NewQuicClient()
 	default:
 		return fmt.Errorf("unsupported protocol: %s", lb.Protocol)

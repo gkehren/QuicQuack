@@ -1,19 +1,26 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"log"
 	"net"
+	"sync"
+	"time"
 )
 
 type UDPServer struct {
-	conn     *net.UDPConn
-	stopChan chan struct{}
+	conn   *net.UDPConn
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
 }
 
 func NewUDPServer() *UDPServer {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &UDPServer{
-		stopChan: make(chan struct{}),
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
@@ -29,15 +36,22 @@ func (s *UDPServer) Start(address string) error {
 	}
 	s.conn = conn
 
+	s.wg.Add(1)
 	go func() {
+		defer s.wg.Done()
 		for {
+			s.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 			select {
-			case <-s.stopChan:
+			case <-s.ctx.Done():
 				return
 			default:
 				buffer := make([]byte, 1024)
 				n, remoteAddr, err := s.conn.ReadFromUDP(buffer)
 				if err != nil {
+					var netErr net.Error
+					if errors.As(err, &netErr) && netErr.Timeout() {
+						continue
+					}
 					if errors.Is(err, net.ErrClosed) {
 						return
 					}
@@ -58,9 +72,12 @@ func (s *UDPServer) Start(address string) error {
 }
 
 func (s *UDPServer) Stop() error {
-	close(s.stopChan)
+	s.cancel()
+	s.wg.Wait()
 	if s.conn != nil {
-		return s.conn.Close()
+		if err := s.conn.Close(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
