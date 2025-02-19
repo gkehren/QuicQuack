@@ -8,12 +8,19 @@ import (
 )
 
 type TCPServer struct {
-	listener net.Listener
-	wg       sync.WaitGroup
+	listener       net.Listener
+	wg             sync.WaitGroup
+	throughputMode bool
 }
 
 func NewTCPServer() *TCPServer {
-	return &TCPServer{}
+	return &TCPServer{
+		throughputMode: false,
+	}
+}
+
+func (s *TCPServer) SetThroughputMode(enabled bool) {
+	s.throughputMode = enabled
 }
 
 func (s *TCPServer) Start(address string) error {
@@ -61,9 +68,11 @@ func (s *TCPServer) handleConnection(conn net.Conn) {
 		if err != nil {
 			return
 		}
-		_, err = conn.Write(buffer[:n])
-		if err != nil {
-			return
+		if !s.throughputMode {
+			_, err = conn.Write(buffer[:n])
+			if err != nil {
+				return
+			}
 		}
 	}
 }

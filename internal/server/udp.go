@@ -16,6 +16,8 @@ type UDPServer struct {
 	wg     sync.WaitGroup
 }
 
+func (s *UDPServer) SetThroughputMode(mode bool) {}
+
 func NewUDPServer() *UDPServer {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &UDPServer{
@@ -35,8 +37,9 @@ func (s *UDPServer) Start(address string) error {
 		return err
 	}
 	s.conn = conn
-
 	s.wg.Add(1)
+
+	buffer := make([]byte, 1024)
 	go func() {
 		defer s.wg.Done()
 		for {
@@ -45,7 +48,6 @@ func (s *UDPServer) Start(address string) error {
 			case <-s.ctx.Done():
 				return
 			default:
-				buffer := make([]byte, 1024)
 				n, remoteAddr, err := s.conn.ReadFromUDP(buffer)
 				if err != nil {
 					var netErr net.Error

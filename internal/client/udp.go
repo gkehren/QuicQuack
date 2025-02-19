@@ -6,7 +6,7 @@ import (
 )
 
 type UDPClient struct {
-	conn net.Conn
+	conn *net.UDPConn
 }
 
 func NewUDPClient() *UDPClient {

@@ -16,12 +16,19 @@ import (
 )
 
 type QuicServer struct {
-	listener *quic.Listener
-	wg       sync.WaitGroup
+	listener       *quic.Listener
+	wg             sync.WaitGroup
+	throughputMode bool
 }
 
 func NewQuicServer() *QuicServer {
-	return &QuicServer{}
+	return &QuicServer{
+		throughputMode: false,
+	}
+}
+
+func (s *QuicServer) SetThroughputMode(mode bool) {
+	s.throughputMode = mode
 }
 
 func (s *QuicServer) Start(address string) error {
@@ -76,8 +83,10 @@ func (s *QuicServer) handleConnection(stream quic.Stream) {
 		if err != nil {
 			return
 		}
-		if _, err := stream.Write(buffer[:n]); err != nil {
-			return
+		if !s.throughputMode {
+			if _, err := stream.Write(buffer[:n]); err != nil {
+				return
+			}
 		}
 	}
 }
