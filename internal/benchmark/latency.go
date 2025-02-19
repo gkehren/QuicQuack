@@ -89,6 +89,6 @@ func (lb *LatencyBenchmark) Results() string {
 		}
 	}
 
-	return fmt.Sprintf("Latency Results (Sample Size: %d)\nAverage: %v\nMin: %v\nMax: %v",
+	return fmt.Sprintf("Latency Results (Sample Size: %d)\nAverage: %v\nMin: %v\nMax: %v\n",
 		lb.SampleSize, avg, min, max)
 }
