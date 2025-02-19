@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -39,7 +40,7 @@ func initialModel() model {
 		state:              StateProtocolSelection,
 		protocols:          []string{"TCP", "UDP", "QUIC"},
 		selectedProtocols:  make(map[int]struct{}),
-		benchmarks:         []string{"Latency"},
+		benchmarks:         []string{"Latency", "Throughput"},
 		selectedBenchmarks: make(map[int]struct{}),
 		options:            make(map[string]string),
 	}
@@ -221,16 +222,28 @@ func runBenchmarks(m model) tea.Cmd {
 		for idx := range m.selectedProtocols {
 			protocol := strings.ToLower(m.protocols[idx])
 
-			lb := benchmark.NewLatencyBenchmark(protocol, "localhost:8080", 10)
-			if err := lb.Run(); err != nil {
-				return benchmarkResultMsg{results: fmt.Sprintf("Error running %s benchmark: %v", protocol, err)}
+			results.WriteString(fmt.Sprintf("Protocol: %s\n", protocol))
+			for benchmarkIdx := range m.selectedBenchmarks {
+				switch m.benchmarks[benchmarkIdx] {
+				case "Latency":
+					lb := benchmark.NewLatencyBenchmark(protocol, "localhost:8080", 10)
+					if err := lb.Run(); err != nil {
+						return benchmarkResultMsg{results: fmt.Sprintf("Error running %s benchmark: %v", protocol, err)}
+					}
+
+					results.WriteString(lb.Results())
+					results.WriteString("\n")
+				case "Throughput":
+					tb := benchmark.NewThroughputBenchmark(protocol, "localhost:8080", 10*time.Second, 1024)
+					if err := tb.Run(); err != nil {
+						return benchmarkResultMsg{results: fmt.Sprintf("Error running %s throughput benchmark: %v", protocol, err)}
+					}
+
+					results.WriteString(tb.Results())
+					results.WriteString("\n")
+				}
 			}
-
-			results.WriteString(fmt.Sprintf("\n%s Results:\n", m.protocols[idx]))
-			results.WriteString(lb.Results())
-			results.WriteString("\n")
 		}
-
 		return benchmarkResultMsg{results: results.String()}
 	}
 }
